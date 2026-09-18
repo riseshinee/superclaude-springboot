@@ -28,10 +28,34 @@
 | `sb-architecture-review` | "아키텍처 리뷰해줘", "레이어 구조 봐줘", PR 리뷰 | 의존성 방향, DTO 경계, 예외 처리, 트랜잭션 경계, 테스트 슬라이스 등을 심각도별로 리뷰 |
 | `sb-jpa-doctor` | "N+1 문제", "쿼리 느려요", "JPA 매핑 리뷰" | N+1 탐지 및 fetch join/`@EntityGraph`/batch size 처방, 연관관계 매핑 함정, 벌크 연산 정합성 진단 |
 | `sb-perf-ops` | "운영 환경 튜닝", "GC/메모리 문제", "커넥션 풀" | HikariCP 사이징, JVM/GC 튜닝, 캐싱 전략, Actuator 관측성, graceful shutdown 진단 |
+| `sb-security-guard` | `/sb-security-guard setup\|audit\|verify`, "사내 도입 전 보안 점검" | 내부 비즈니스 로직·시크릿·개인정보가 Claude로 전송되지 않도록 hook과 deny 규칙을 설정하고, 프로젝트의 위반 사항을 점검 |
 
 ## 사용 방법
 
 설치 후에는 별도 호출 없이, 대화 내용이 스킬 설명과 맞으면 Claude Code가 자동으로 해당 스킬을 불러옵니다. 특정 스킬을 명시적으로 쓰고 싶다면 이름을 직접 언급하면 됩니다. 예: "sb-jpa-doctor로 이 리포지토리 봐줘".
+
+## 사내 도입 전 보안 설정 (`sb-security-guard`)
+
+모델에게 "민감 정보를 읽지 마"라고 지시하는 대신, **Claude Code 하네스 단계에서 강제로 차단**합니다.
+
+| 계층 | 동작 |
+|---|---|
+| 프롬프트 가드 (`UserPromptSubmit` hook) | 시크릿·개인정보 패턴이나 대외비 키워드가 들어간 프롬프트를 지우고, **모델로 전송하지 않음** |
+| 도구 가드 (`PreToolUse` hook) | 보호 경로를 가리키는 Read/Grep/Bash 등의 도구 호출을 차단해 파일 내용이 컨텍스트에 들어가지 않게 함 |
+| deny 규칙 (`permissions.deny`) | 보호 경로에 대한 기본 파일 도구와 `@파일` 언급을 차단하고, Claude가 가드 설정 자체를 수정하지 못하게 함 |
+| 정책 파일 (`.claude/security-policy.conf`) | 위 규칙의 단일 출처. `[secret-patterns]`(정규식), `[sensitive-keywords]`(키워드), `[protected-paths]`(glob) 섹션으로 구성되며 회사별로 수정 |
+
+도입 절차:
+
+1. 설치 스크립트로 스킬을 설치합니다.
+2. Claude Code에서 `/sb-security-guard setup`을 실행합니다. 정책 파일이 복사되고, 핵심 비즈니스 로직 패키지와 사내 키워드를 물어본 뒤 `.claude/settings.json`에 hook과 deny 규칙을 등록합니다.
+3. Claude Code를 재시작하고 `/sb-security-guard verify`로 차단과 허용 동작을 확인합니다.
+4. `/sb-security-guard audit`로 git에 커밋된 보호 파일이나 평문 시크릿이 있는지 점검합니다. 결과에는 위치만 표시되고 내용은 출력되지 않습니다.
+5. `.claude/settings.json`과 `.claude/security-policy.conf`를 커밋합니다. 설정 이후 이 파일들은 사람만 수정할 수 있으니, 보안 담당자 리뷰를 거쳐 변경하세요.
+
+요구 사항은 `bash`(Windows는 Git Bash)뿐이며, jq·Node·Python은 필요 없습니다. hook은 bash 내장 기능만 써서 호출당 약 0.3초가 걸립니다.
+
+한계: 경로 차단은 도구 호출의 텍스트를 기준으로 합니다. 따라서 `grep -r .`이나 빌드 스크립트처럼 파일을 간접적으로 읽는 경우는 막지 못합니다. OS 수준 차단이 필요하면 Claude Code 샌드박스를, 개발자가 끌 수 없는 조직 단위 강제가 필요하면 managed settings 배포를 함께 사용하세요.
 
 ## 향후 계획
 
