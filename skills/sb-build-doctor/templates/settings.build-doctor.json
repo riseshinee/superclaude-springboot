@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash .claude/skills/sb-build-doctor/scripts/build.sh:*)",
+      "Bash(bash .claude/skills/sb-build-doctor/scripts/trace.sh:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/skills/sb-build-doctor/hooks/redirect-build.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
