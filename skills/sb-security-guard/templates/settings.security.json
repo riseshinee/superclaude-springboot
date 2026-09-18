@@ -1,0 +1,66 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Edit(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(**/.env.*)",
+      "Read(**/application-prod*)",
+      "Edit(**/application-prod*)",
+      "Read(**/application-real*)",
+      "Edit(**/application-real*)",
+      "Read(**/application-secret*)",
+      "Edit(**/application-secret*)",
+      "Read(**/bootstrap-prod*)",
+      "Edit(**/bootstrap-prod*)",
+      "Read(**/*.pem)",
+      "Edit(**/*.pem)",
+      "Read(**/*.key)",
+      "Edit(**/*.key)",
+      "Read(**/*.jks)",
+      "Edit(**/*.jks)",
+      "Read(**/*.p12)",
+      "Edit(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Edit(**/*.pfx)",
+      "Read(**/*.keystore)",
+      "Edit(**/*.keystore)",
+      "Read(**/id_rsa*)",
+      "Edit(**/id_rsa*)",
+      "Read(**/.aws/credentials)",
+      "Edit(**/.aws/credentials)",
+      "Read(**/.ssh/**)",
+      "Edit(**/.ssh/**)",
+      "Read(**/secrets/**)",
+      "Edit(**/secrets/**)",
+      "Edit(/.claude/settings.json)",
+      "Edit(/.claude/security-policy.conf)",
+      "Edit(/.claude/skills/sb-security-guard/**)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/skills/sb-security-guard/hooks/prompt-guard.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/skills/sb-security-guard/hooks/tool-guard.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
