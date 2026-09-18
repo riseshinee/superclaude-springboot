@@ -29,6 +29,7 @@ If a skill with the same name already exists, you'll be asked whether to overwri
 | `sb-jpa-doctor` | "N+1 problem", "queries are slow", "review this JPA mapping" | Detects N+1 issues and prescribes fetch join/`@EntityGraph`/batch size fixes; flags association-mapping pitfalls and bulk-operation consistency issues |
 | `sb-perf-ops` | "tune the production environment", "GC/memory issue", "connection pool" | Diagnoses HikariCP sizing, JVM/GC tuning, caching strategy, Actuator observability, and graceful shutdown |
 | `sb-security-guard` | `/sb-security-guard setup\|audit\|verify`, "check this project before rolling out Claude" | Sets up hooks and deny rules that keep internal business logic, secrets, and personal data from being sent to Claude, and audits the project for violations |
+| `sb-build-doctor` | "run the tests", "the build is broken", "the app won't start", any Gradle/Maven run | Runs builds through a wrapper that returns only compile errors, failed tests, and trimmed stack traces (the full log stays on disk), condenses Spring logs, and stops repeated failed fix attempts with a circuit breaker |
 
 ## Usage
 
@@ -56,6 +57,19 @@ Rollout:
 It only needs `bash` (Git Bash on Windows), with no jq, Node, or Python. The hooks use bash builtins only and take about 0.3 s per call.
 
 Limits: path blocking is based on the text of a tool call, so it doesn't catch indirect reads such as `grep -r .` or a build script opening a file. For OS-level enforcement, add Claude Code's sandbox; for org-wide enforcement developers can't turn off, distribute the settings as managed settings.
+
+## Token-efficient builds (`sb-build-doctor`)
+
+Raw Gradle/Maven output and Spring stack traces are mostly progress lines and framework frames, and one test run can put tens of kilobytes into Claude's context. `sb-build-doctor` keeps only what's actionable:
+
+| Script | What it returns |
+|---|---|
+| `scripts/build.sh <task> [args]` | Status, test counts, compile errors with source context, the build tool's failure summary, and failed tests (from JUnit XML) with framework frames collapsed. A passing build prints three lines. The full log is saved to `.claude/build-doctor/last-build.log`. |
+| `scripts/trace.sh <log>` | For application logs: the `APPLICATION FAILED TO START` report, distinct ERROR lines with counts, and distinct condensed stack traces. |
+
+After the same failure repeats 3 runs in a row within 10 minutes, `build.sh` trips a circuit breaker: Claude stops editing and reports what it tried instead of looping. In a sample Spring Boot project, a failing `mvn test` log of 43 KB came back as about 2.5 KB with every failure and its root cause intact.
+
+To enforce the wrapper, merge `templates/settings.build-doctor.json` into `.claude/settings.json`. It adds a hook that turns away raw `./gradlew test`/`mvn verify` runs and points Claude at `build.sh`, plus allow rules so the scripts run without prompts.
 
 ## Roadmap
 

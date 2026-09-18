@@ -29,6 +29,7 @@
 | `sb-jpa-doctor` | "N+1 문제", "쿼리 느려요", "JPA 매핑 리뷰" | N+1 탐지 및 fetch join/`@EntityGraph`/batch size 처방, 연관관계 매핑 함정, 벌크 연산 정합성 진단 |
 | `sb-perf-ops` | "운영 환경 튜닝", "GC/메모리 문제", "커넥션 풀" | HikariCP 사이징, JVM/GC 튜닝, 캐싱 전략, Actuator 관측성, graceful shutdown 진단 |
 | `sb-security-guard` | `/sb-security-guard setup\|audit\|verify`, "사내 도입 전 보안 점검" | 내부 비즈니스 로직·시크릿·개인정보가 Claude로 전송되지 않도록 hook과 deny 규칙을 설정하고, 프로젝트의 위반 사항을 점검 |
+| `sb-build-doctor` | "테스트 돌려줘", "빌드가 깨졌어", "앱이 안 떠요", Gradle/Maven 실행 전반 | 빌드를 래퍼로 실행해 컴파일 에러·실패 테스트·축약된 스택 트레이스만 돌려주고(전체 로그는 파일로 보관), Spring 로그를 요약하며, 같은 실패가 반복되면 서킷 브레이커로 수정 시도를 멈춤 |
 
 ## 사용 방법
 
@@ -56,6 +57,19 @@
 요구 사항은 `bash`(Windows는 Git Bash)뿐이며, jq·Node·Python은 필요 없습니다. hook은 bash 내장 기능만 써서 호출당 약 0.3초가 걸립니다.
 
 한계: 경로 차단은 도구 호출의 텍스트를 기준으로 합니다. 따라서 `grep -r .`이나 빌드 스크립트처럼 파일을 간접적으로 읽는 경우는 막지 못합니다. OS 수준 차단이 필요하면 Claude Code 샌드박스를, 개발자가 끌 수 없는 조직 단위 강제가 필요하면 managed settings 배포를 함께 사용하세요.
+
+## 토큰 절감 빌드 (`sb-build-doctor`)
+
+Gradle/Maven 원본 출력과 Spring 스택 트레이스는 대부분 진행 로그와 프레임워크 프레임입니다. 테스트 한 번에 수십 KB가 Claude 컨텍스트에 들어갈 수 있습니다. `sb-build-doctor`는 조치에 필요한 부분만 남깁니다.
+
+| 스크립트 | 반환 내용 |
+|---|---|
+| `scripts/build.sh <task> [args]` | 상태, 테스트 수, 소스 위치가 포함된 컴파일 에러, 빌드 도구의 실패 요약, 실패한 테스트(JUnit XML 기반, 프레임워크 프레임 축약). 성공하면 3줄만 출력합니다. 전체 로그는 `.claude/build-doctor/last-build.log`에 저장됩니다. |
+| `scripts/trace.sh <log>` | 애플리케이션 로그용. `APPLICATION FAILED TO START` 리포트, 중복 제거된 ERROR 줄과 횟수, 중복 제거·축약된 스택 트레이스를 보여줍니다. |
+
+같은 실패가 10분 안에 3번 연속 나오면 `build.sh`가 서킷 브레이커를 작동시킵니다. Claude는 수정을 멈추고, 같은 시도를 반복하는 대신 시도한 내용을 보고합니다. 샘플 Spring Boot 프로젝트에서 실패한 `mvn test` 로그 43KB가 약 2.5KB로 줄었고, 모든 실패와 근본 원인은 그대로 남았습니다.
+
+래퍼 사용을 강제하려면 `templates/settings.build-doctor.json`을 `.claude/settings.json`에 병합하세요. 원본 `./gradlew test`/`mvn verify` 실행을 막고 `build.sh`로 안내하는 hook과, 스크립트를 권한 확인 없이 실행하는 allow 규칙이 추가됩니다.
 
 ## 향후 계획
 
