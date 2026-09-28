@@ -30,6 +30,9 @@
 | `sb-perf-ops` | "운영 환경 튜닝", "GC/메모리 문제", "커넥션 풀" | HikariCP 사이징, JVM/GC 튜닝, 캐싱 전략, Actuator 관측성, graceful shutdown 진단 |
 | `sb-security-guard` | `/sb-security-guard setup\|audit\|verify`, "사내 도입 전 보안 점검" | 내부 비즈니스 로직·시크릿·개인정보가 Claude로 전송되지 않도록 hook과 deny 규칙을 설정하고, 프로젝트의 위반 사항을 점검 |
 | `sb-build-doctor` | "테스트 돌려줘", "빌드가 깨졌어", "앱이 안 떠요", Gradle/Maven 실행 전반 | 빌드를 래퍼로 실행해 컴파일 에러·실패 테스트·축약된 스택 트레이스만 돌려주고(전체 로그는 파일로 보관), Spring 로그를 요약하며, 같은 실패가 반복되면 서킷 브레이커로 수정 시도를 멈춤 |
+| `sb-test-writer` | "테스트 짜줘", "이거 테스트 추가해줘", "커버리지 올려줘", "테스트 리뷰해줘" | 동작을 증명할 수 있는 가장 가벼운 테스트 종류(JUnit, Mockito, `@WebMvcTest`, `@DataJpaTest`, Testcontainers)를 골라 fixture와 실패 케이스까지 작성하고, 기존 테스트 중 실패할 수 없는 테스트를 찾아 리뷰 |
+| `sb-exception-design` | "에러 응답 통일", "예외 처리 설계", "ProblemDetail", "왜 500이 나와요" | 비즈니스 예외 계층과 에러 코드, 단일 `@RestControllerAdvice`와 `ProblemDetail`(RFC 9457) 응답, 검증 에러 포맷, 상태 코드 매핑, 로그 레벨을 설계 |
+| `sb-transaction-doctor` | "@Transactional이 안 먹어요", "롤백이 안 돼요", "UnexpectedRollbackException", "LazyInitializationException" | self-invocation, checked 예외 롤백, rollback-only, 전파 속성/`readOnly` 선택, 트랜잭션 이벤트, `@Async`, 커넥션 풀을 고갈시키는 긴 트랜잭션을 진단 |
 
 ## 사용 방법
 
@@ -73,7 +76,6 @@ Gradle/Maven 원본 출력과 Spring 스택 트레이스는 대부분 진행 로
 
 ## 향후 계획
 
-- 테스트 코드 생성/리뷰 스킬(`sb-test-writer`) 추가 검토
 - 스킬 세트가 안정화되면 Claude Code 플러그인(마켓플레이스 배포) 형태로 확장 검토
 
 ## License

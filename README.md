@@ -30,6 +30,9 @@ If a skill with the same name already exists, you'll be asked whether to overwri
 | `sb-perf-ops` | "tune the production environment", "GC/memory issue", "connection pool" | Diagnoses HikariCP sizing, JVM/GC tuning, caching strategy, Actuator observability, and graceful shutdown |
 | `sb-security-guard` | `/sb-security-guard setup\|audit\|verify`, "check this project before rolling out Claude" | Sets up hooks and deny rules that keep internal business logic, secrets, and personal data from being sent to Claude, and audits the project for violations |
 | `sb-build-doctor` | "run the tests", "the build is broken", "the app won't start", any Gradle/Maven run | Runs builds through a wrapper that returns only compile errors, failed tests, and trimmed stack traces (the full log stays on disk), condenses Spring logs, and stops repeated failed fix attempts with a circuit breaker |
+| `sb-test-writer` | "write tests", "add a test for this", "increase test coverage", "review these tests" | Picks the cheapest test type that proves the behavior (plain JUnit, Mockito, `@WebMvcTest`, `@DataJpaTest`, Testcontainers), writes tests with fixtures and unhappy paths, and reviews existing tests for ones that can't fail |
+| `sb-exception-design` | "unify error responses", "global exception handler", "ProblemDetail", "why does this return 500" | Designs the business exception hierarchy and error codes, a single `@RestControllerAdvice` with `ProblemDetail` (RFC 9457) responses, validation error format, status mapping, and logging levels |
+| `sb-transaction-doctor` | "@Transactional doesn't work", "it didn't roll back", "UnexpectedRollbackException", "LazyInitializationException" | Diagnoses self-invocation, checked-exception rollback, rollback-only, propagation/`readOnly` choices, transaction-bound events, `@Async`, and long transactions that exhaust the connection pool |
 
 ## Usage
 
@@ -73,7 +76,6 @@ To enforce the wrapper, merge `templates/settings.build-doctor.json` into `.clau
 
 ## Roadmap
 
-- Consider adding a test-generation/review skill (`sb-test-writer`)
 - Once the skill set stabilizes, consider packaging it as a Claude Code plugin for marketplace distribution
 
 ## License
