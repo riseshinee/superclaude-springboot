@@ -177,3 +177,7 @@ After generating code, verify and summarize for the user:
 - [ ] Is constructor injection used exclusively (no field injection)?
 - [ ] Do write-operation Service methods have `@Transactional` (with the class defaulting to `readOnly = true`)?
 - [ ] Does a missing-resource lookup throw a domain exception handled by the GlobalExceptionHandler?
+
+## Next steps
+
+The templates above show a minimal error body. If the project has no error-handling design yet, or needs error codes and `ProblemDetail`, use `sb-exception-design` (if installed) instead of the minimal `ErrorResponse`. After generating, offer to write tests with `sb-test-writer` and to compile and run them with `sb-build-doctor`, when those skills are installed.
